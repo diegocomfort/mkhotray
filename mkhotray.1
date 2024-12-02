@@ -1,0 +1,223 @@
+.\" Knock knock.
+.\" Who's there?
+.\" man
+.\" man who?
+.\" No manual entry for who?
+
+
+.TH mkhotray 1 "24 November 2024 - Version 0.0" Hello!
+
+
+.SH NAME
+mkhotray \- Make a hot\-reload template for Raylib.
+
+
+.SH SYNOPSIS
+.SY
+.B mkhotray
+.RI [ OPTION ]... 
+.RI < project_name >
+.YS
+
+
+.SH DESCRIPTION
+Creates a hot-reload template for Raylib to use for a project. The
+hot-reload structure itself was inspired (stolen) from Tsoding
+
+This command uses GNU Argp to parse arguments.
+.TP
+\fB\-d\fR, \fB\-\-directory\-name=<project directory name>\fR
+The project directory's name.
+Default: <project name>
+.TP
+\fB\-i\fR, \fB\-\-identifier\-name=<identifier name>\fR
+The identifer to use for functions/variables.
+Default: <project name>
+.TP
+\fB\-l\fR, \fB\-\-lib\-name=<shared library name>\fR
+The name for the shared library (lib<lib-name>.so).
+Default: <identifier name> (defaults to <project name> 
+if no <identifier name> is provided)
+.TP
+.B
+\-d, \-\-parent\-dir=<project parent directory name>
+The project's parent directory. 
+Default: ./
+.TP
+\fB\-?\fR, \fB\-\-help\fR
+Show help
+.TP
+\fB\-\-usage\fR
+Show usage
+
+
+.SH PROJECT SRUCTURE
+.nf
+<project directory name>/
+├── Makefile
+├── dist/
+│   ├── *.o
+│   ├── lib<lib name>.so
+│   └── <identifier name>
+└── src/
+    ├── main.c
+    ├── include/
+    │   └── <identifier name>.h
+    └── lib/
+        ├── close.c
+        ├── init.c
+        ├── save-restore.c
+        └── update.c
+.fi
+.PP
+The hot-reloading works because the executale uses dlsym() to load the
+code for the app at runtime, which can be recompiled an reloaded,
+allowing for hot-reloading. The default key to reload is
+.B R
+
+.SS Makefile
+.TP 
+.B make dev
+This creates the executable and the shared library (with all the
+respective object files from the C files in src/lib/) which linked at
+runtime for hot-reloading. 
+.B Creates:
+.I dist/<identifier_name>
+(executable) and
+.I dist/lib<lib_name>.so
+(shared library)
+.TP 
+.B make prod
+This links all objects at compile time for a NOT-hot-reloadable
+result.
+.B Creates:
+.I dist/<identifier_name>
+(executable)
+.TP
+.B make reload
+This only recompiles the shared object, so that the app can be
+reloaded. Do NOT reload if changed where made to the <identifier name>
+struct found in src/include/<identifier name>.h If you change the struture
+that stores the state of the app, you HAVE to recompile the
+executable, close the running program, and launch the new executable
+(this is because you will be treating the old struct like the new
+struct, but it is changed, so memory will be access differently,
+leading to crashes).
+.B Creates:
+.I dist/lib<lib_name>.so
+(shared library)
+.TP
+.B make clean
+Removes the executable, shared library, and all shared objects
+
+.SS dist/<identifier name>
+.PP
+The executable for your program.
+
+.SS dist/lib<lib name>.so
+.PP
+This will only be used/created if you compile with
+.B make dev
+or 
+.B make reload
+It is the shared object that allows for hot-reloaded.
+
+.SS src/main.c
+.PP
+You propably shouldn't touch this unless you want to change the key to
+hot-reload. This contains all the code that does the hot-reloading, so
+if you change anything here, you have to recompile the executable,
+close the running program, and launch the new executable.
+
+.SS src/include/
+.PP
+Contains all the header files.
+
+.B <identifier name>.h
+is where the 
+.B struct <identifier name>
+is defined. The struct holds all the information for the app to hot
+reload (eg. user info, raw data, etc.).
+
+.SS src/lib/
+.PP 
+Contains the rest of the code for the app.
+
+.B init.c
+contains a function that is called when the app is opened; use it to
+allocate memory, initialize the <identifier name> struct, etc.
+
+.B close.c
+contains a function that will be called when the app is closed; use it
+to free pointers, unload data, etc.
+
+.B save-restore.c
+contains two functions, one that is run before hot-reloading, and one
+that is run after hot-realoading; use them to save/restore the
+<identifier name> struct, as well as to manage any other function
+pointers (that will be hot-reloaded) used by other libraries (that
+won't be hot-reloaded)
+
+.B update.c
+contains the function that will be run every frame (this is
+essentially the game loop); use it to draw stuff, and do whatever it
+is your app does.
+
+
+.SH EXAMPLE
+.PP
+The following command will create a 
+project named
+.SB MyGame
+in the directory
+.SB ~/Projects/Raylib/My-Game\,
+and the source-code structure will named
+.SB struct my_game\,
+and the shared object will be named
+.SB libmygame.so
+.PP
+.EX
+.B > mkhotray -p ~/Projects/Raylib -d My-Game -i my_game -l mygame MyGame
+.EE
+.PP
+You can then go the the project, build it, and run it
+.PP
+.EX
+.B > cd ~/Projects/Raylib/My-Game
+.B > make dev
+.B > ./dist/my_game
+.EE
+.PP
+Now, you can edit something, maybe changing the text 
+or the color of the window in 
+.SB src/lib/update.c
+and you can re-compile the program (shared library)
+.PP
+.EX
+.B > make reload
+.EE
+.PP
+When you are ready to hot-reload, switch to the Raylib 
+window, and press
+.SB R
+to hot-reload the app, and you should see your changes
+
+.SH RAYLIB
+If you aren't already familiar with it, they provide great examples,
+and the header file is all you need to learn how to use it.
+.UR
+https://raylib.com
+.UE
+
+.SH INSPIRATION
+.UR
+https://github.com/tsoding/musializer
+.UE
+.UR
+https://www.youtube.com/playlist?list=PLpM-Dvs8t0Vak1rrE2NJn8XYEJ5M7-BqT
+.UE
+
+.SH SEE ALSO
+.BR dlfcn.h (0p)
+.BR dlsym (3)
+.BR dlopen (3)

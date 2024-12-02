@@ -1,0 +1,75 @@
+#+Title: mkhotray: Make a Hot-Reload Template for Raylib
+#+author: Diego Comfort
+
+* About
+This is mostly inspired (/copied/) from something [[https://twitch.tv/tsoding][Tsoding]] made and
+that I found nice to use.
+
+** Name
+mkhotray
+
+Why?
+
+Because there are already a thousand mk* commands, and I though it
+wouldn't hurt to mk another one.
+
+* Making
+** Installation
+You need [[https://www.gnu.org/software/libc/manual/html_node/Argp.html][~argp~]] && [[https://gcc.gnu.org/][~gcc~]] (~argp~ should come with [[https://sourceware.org/glibc/][~glibc~]], I think)
+(most people should already have all of this, I think) (you're
+probably fine, I think) (or maybe not, how should I know?) (stop
+overthinking this, dude)
+
+You also need [[https://raylib.com][~raylib~]], but I assume you already have that since
+that's what this tool is for.
+
+#+begin_src shell
+  git clone --depth 1 https://github.com/diegocomfort/mkhotray.git
+  make
+  sudo make install
+  cd mkhotray/
+#+end_src
+
+Files installed: ~/usr/bin/mkhotray~,
+~/usr/share/man/man1/mkhotray.1~ , and all files in
+~/usr/share/mkhotray/~
+
+** Uninstallation
+#+begin_src shell
+  sudo make uninstall
+#+end_src
+
+* Ho to Use it
+See also: [[elisp:(woman-find-file "mkhotray.1")][mkhotray(1)]]
+
+** Cli
+#+begin_quote
+  USAGE:  
+  mkhotray [OPTION...] <project name>
+
+  OPTIONS:
+  -d, --directory-name=<project directory name>
+	The project directory's name. 
+	Default: <projectname>
+
+  -i, --identifier-name=<identifier name>
+	The identifer to use for functions/variables.
+	Default: <project name>
+
+  -l, --lib-name=<shared library name>
+	The name for the shared library: lib<lib-name>.so
+	Default: <identifier name> (defaults to <projectname> if no <identifier name> is provided)
+
+  -p, --parent-dir=<project parent directory name>
+	  The project's parent directory. 
+	  Default: ./
+
+  -?, --help                 Give this help list
+
+  --usage                Give a short usage message
+#+end_quote
+
+** The hot-reload template itself
+Read the man page, I don't want to translate from groff to org.
+
+Or just tinker with stuff until it crashes, that's how I like do it.
